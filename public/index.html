@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hệ thống giám sát</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    .status { margin: 20px auto; max-width: 400px; }
+    .keypad { display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; justify-content: center; }
+    .key { width: 60px; height: 60px; background: #eee; border-radius: 8px; line-height: 60px; font-size: 24px; }
+    .active { background: #4CAF50; color: white; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Hệ thống cảm biến và điều khiển</h1>
+
+  <div class="status">
+    <p><strong>Nhiệt độ:</strong> <span id="temp">--</span> °C</p>
+    <p><strong>Độ ẩm không khí:</strong> <span id="humi">--</span> %</p>
+    <p><strong>Độ ẩm đất:</strong> <span id="soil">--</span></p>
+    <p><strong>Tình trạng cháy:</strong> <span id="fire">Không</span></p>
+    <p><strong>Trạng thái tưới:</strong> <span id="watering">Đang tắt</span></p>
+  </div>
+
+  <button onclick="stopBuzzer()">Dừng còi</button>
+  <button onclick="toggleWater()">Bật/Tắt tưới</button>
+
+  <h2>Bàn phím TTP226</h2>
+  <div class="keypad" id="keypad">
+    <div class="key" id="k1">1</div>
+    <div class="key" id="k2">2</div>
+    <div class="key" id="k3">3</div>
+    <div class="key" id="k4">4</div>
+    <div class="key" id="k5">5</div>
+    <div class="key" id="k6">6</div>
+    <div class="key" id="k7">7</div>
+    <div class="key" id="k8">8</div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('dht', (data) => {
+      document.getElementById('temp').textContent = data.temp;
+      document.getElementById('humi').textContent = data.humi;
+    });
+
+    socket.on('soil', (value) => {
+      document.getElementById('soil').textContent = value;
+    });
+
+    socket.on('fire', (hasFire) => {
+      document.getElementById('fire').textContent = hasFire ? '🔥 Báo động cháy!' : 'Không';
+    });
+
+    socket.on('watering', (status) => {
+      document.getElementById('watering').textContent = status ? 'Đang tưới' : 'Đang tắt';
+    });
+
+    socket.on('key', (data) => {
+  // Tắt hết màu xanh
+  document.querySelectorAll('.key').forEach(k => k.classList.remove('active'));
+
+  // Lấy số phím từ dữ liệu (vì data có thể là "1", " 1", "1\n"... nên cần .trim())
+  const key = parseInt(data.trim());
+  const keyDiv = document.getElementById('k' + key);
+
+  // Nếu có phím đúng (1-8), tô xanh
+  if (keyDiv) keyDiv.classList.add('active');
+});
+
+
+
+    function stopBuzzer() {
+      socket.emit('stop-buzzer');
+    }
+
+    function toggleWater() {
+      socket.emit('toggle-water');
+    }
+  </script>
+</body>
+</html>
