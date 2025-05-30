@@ -33,6 +33,7 @@ let fire = false;
 let watering = false;
 let light = false;
 let buzzer = false;
+let mode = false;
 
 // === Xử lý Arduino 1 ===
 parser1.on('data', (data) => {
@@ -88,6 +89,12 @@ parser2.on('data', (data) => {
     io.emit('watering', watering);
     masterSocket.emit('watering', watering);
   }
+  else if (data.startsWith('Mode:')) {
+    const value = data.slice(5).trim().toUpperCase();
+    mode = (value === 'ON');
+    io.emit('mode', mode);
+    masterSocket.emit('mode', mode);
+  }
   else if (data.startsWith('Den:')) {
     const value = data.slice(4).trim().toUpperCase();
     light = (value === 'ON' || value === 'BAT'); // hỗ trợ cả ON và BAT
@@ -101,16 +108,6 @@ parser2.on('data', (data) => {
     masterSocket.emit('buzzer', buzzer);
   }
 });
-
-
-
-
-
-
-
-
-
-
 
 
 // // Giao tiếp từ giao diện local
@@ -160,6 +157,15 @@ masterSocket.on('start-pump', () => {
 masterSocket.on('auto-pump', () => {
   console.log('📥 Nhận lệnh từ master: AUTO_PUMP');
   port2.write('BOM AUTO\n');
+});
+
+masterSocket.on('stop-mode', () => {
+  console.log('📥 Nhận lệnh từ master: STOP_MODE');
+  port2.write('MODE TAT\n');
+});
+masterSocket.on('start-mode', () => {
+  console.log('📥 Nhận lệnh từ master: START_MODE');
+  port2.write('MODE BAT\n');
 });
 
 masterSocket.on('auto-all', () => {
