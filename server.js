@@ -120,6 +120,39 @@ parser2.on('data', (data) => {
 // });
 
 // Lắng nghe sự kiện điều khiển từ master server
+
+masterSocket.on('key', (key) => {
+  console.log(`📥 Nhận lệnh KEY từ master: ${key}`);
+  switch (key) {
+    case '1':
+      port2.write('BUZZER TAT\n');
+      break;
+    case '2':
+      port2.write('BUZZER BAT\n');
+      break;
+    case '3':
+      port2.write('DEN TAT\n');
+      break;
+    case '4':
+      port2.write('DEN BAT\n');
+      break;
+    case '5':
+      port2.write('BOM TAT\n');
+      break;
+    case '6':
+      port2.write('BOM BAT\n');
+      break;
+    case '7':
+      port2.write('MODE TAT\n');
+      break;
+    case '8':
+      port2.write('MODE BAT\n');
+      break;
+    default:
+      console.log('⚠️ Phím không hợp lệ:', key);
+  }
+});
+
 masterSocket.on('stop-buzzer', () => {
   console.log('📥 Nhận lệnh từ master: STOP_BUZZER');
   port2.write('BUZZER TAT\n');
