@@ -17,11 +17,11 @@ masterSocket.on('connect', () => {
 });
 
 // Arduino 1: DHT11 + TTP226
-const port1 = new SerialPort({ path: 'COM3', baudRate: 9600 });
+const port1 = new SerialPort({ path: 'COM11', baudRate: 9600 });
 const parser1 = port1.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
 // Arduino 2: Phan con lai
-const port2 = new SerialPort({ path: 'COM4', baudRate: 9600 });
+const port2 = new SerialPort({ path: 'COM12', baudRate: 9600 });
 const parser2 = port2.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
 app.use(express.static('public'));
@@ -37,7 +37,7 @@ let mode = false;
 
 // === Xử lý Arduino 1 ===
 parser1.on('data', (data) => {
-  console.log('[COM3]', data);
+  console.log('[COM11]', data);
 
   // DHT11
   if (data.startsWith('TEMP:')) {
@@ -58,14 +58,45 @@ parser1.on('data', (data) => {
     const key = data.slice(4).trim();
     io.emit('key', key);
     masterSocket.emit('key', key);
+    // Xử lý lệnh điều khiển nếu key từ 1 đến 8
+  switch (key) {
+    case '1':
+      port2.write('BUZZER TAT\n');
+      break;
+    case '2':
+      port2.write('BUZZER BAT\n');
+      break;
+    case '3':
+      port2.write('DEN TAT\n');
+      break;
+    case '4':
+      port2.write('DEN BAT\n');
+      break;
+    case '5':
+      port2.write('BOM TAT\n');
+      break;
+    case '6':
+      port2.write('BOM BAT\n');
+      break;
+    case '7':
+      port2.write('MODE TAT\n');
+      break;
+    case '8':
+      port2.write('MODE BAT\n');
+
+      break;
+    default:
+      console.log('⚠️ Phím TTP không hợp lệ:', key);
   }
+  
+}
 });
 
 
 
 // === Xử lý Arduino 2 ===
 parser2.on('data', (data) => {
-  console.log('[COM4]', data);
+  console.log('[COM12]', data);
 
   if (data.startsWith('DoAm:')) {
     soil = parseInt(data.slice(5).trim());
